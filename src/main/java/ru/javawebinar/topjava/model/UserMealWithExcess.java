@@ -11,7 +11,7 @@ public class UserMealWithExcess {
 
     private final int calories;
 
-    private AtomicBoolean excess;
+    private final AtomicBoolean excess;
 
     public UserMealWithExcess(LocalDateTime dateTime, String description, int calories, boolean excess) {
         this.dateTime = dateTime;
