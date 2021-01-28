@@ -8,10 +8,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Month;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class UserMealsUtil {
     public static void main(String[] args) {
@@ -29,8 +26,7 @@ public class UserMealsUtil {
         mealsTo.forEach(System.out::println);
 
         System.out.println(filteredByStreams(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000));
-        System.out.println(filteredByCycle(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000));
-        System.out.println(filteredByStream(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000));
+        System.out.println(filteredByOneCycle(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000));
     }
 
     public static List<UserMealWithExcess> filteredByCycles(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
@@ -56,55 +52,62 @@ public class UserMealsUtil {
                 .collect(Collectors.toList());
     }
 
-    public static List<UserMealWithExcess> filteredByCycle(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
-        class ExcessCalories {
-            private int calories;
-            private final AtomicBoolean excess = new AtomicBoolean();
+    public static List<UserMealWithExcess> filteredByOneCycle(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
+        class QueueMealWithExcess {
+            private int count;
+            private UserMealWithExcess userMealWithExcess;
+            private QueueMealWithExcess before;
 
-            private ExcessCalories(int calories) {
-                this.calories = calories;
+            public QueueMealWithExcess(int count) {
+                this.count = count;
             }
 
-            private void increase(int calories) {
-                this.calories += calories;
-                this.excess.compareAndSet(false, this.calories > caloriesPerDay);
+            public void decreaseCount(int i) {
+                this.count -= i;
+                update(count < 0);
+            }
+
+            private void update(boolean ex) {
+                if (ex) {
+                    this.userMealWithExcess.setExcess(true);
+                    if (before != null) {
+                        before.update(true);
+                    }
+                    before = null;
+                }
+            }
+
+            public QueueMealWithExcess add(UserMealWithExcess userMealWithExcess) {
+                if (this.userMealWithExcess == null) {
+                    this.userMealWithExcess = userMealWithExcess;
+                    return this;
+                }
+                QueueMealWithExcess queueMealWithExcess = new QueueMealWithExcess(count);
+                queueMealWithExcess.before = this;
+                queueMealWithExcess.userMealWithExcess = userMealWithExcess;
+                return queueMealWithExcess;
             }
         }
 
-        Map<LocalDate, ExcessCalories> caloriesPerDays = new HashMap<>();
         List<UserMealWithExcess> result = new ArrayList<>();
+        Map<LocalDate, QueueMealWithExcess> caloriesPerDays = new HashMap<>();
         meals.forEach(meal -> {
-            caloriesPerDays.merge(meal.getDateTime().toLocalDate(), new ExcessCalories(meal.getCalories()), (c, c2) -> {
-                c.increase(c2.calories);
-                return c;
-            });
+            QueueMealWithExcess queueMealWithExcess = caloriesPerDays.get(meal.getDateTime().toLocalDate());
+            if (queueMealWithExcess == null) {
+                queueMealWithExcess = new QueueMealWithExcess(caloriesPerDay);
+                caloriesPerDays.put(meal.getDateTime().toLocalDate(), queueMealWithExcess);
+            }
+            queueMealWithExcess.decreaseCount(meal.getCalories());
+
             if (TimeUtil.isBetweenHalfOpen(meal.getDateTime().toLocalTime(), startTime, endTime)) {
-                result.add(convertToUserMealWithExcess(meal, caloriesPerDays.get(meal.getDateTime().toLocalDate()).excess));
+                UserMealWithExcess userMealWithExcess = convertToUserMealWithExcess(meal, queueMealWithExcess.count < 0);
+                if (queueMealWithExcess.count >= 0) {
+                    caloriesPerDays.put(meal.getDateTime().toLocalDate(), queueMealWithExcess.add(userMealWithExcess));
+                }
+                result.add(userMealWithExcess);
             }
         });
         return result;
-    }
-
-    public static List<UserMealWithExcess> filteredByStream(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
-        return meals.stream()
-                .collect(Collectors.groupingBy(meal -> meal.getDateTime().toLocalDate()))
-                .entrySet().stream()
-                .flatMap(mealsPerDay -> {
-                    AtomicBoolean generalExcess = new AtomicBoolean();
-                    final AtomicInteger caloriesPerDayLocal = new AtomicInteger(caloriesPerDay);
-                    Stream<UserMealWithExcess> stream = mealsPerDay.getValue().stream()
-                            .peek(meal -> caloriesPerDayLocal.addAndGet(-meal.getCalories()))
-                            .filter(meal -> TimeUtil.isBetweenHalfOpen(meal.getDateTime().toLocalTime(), startTime, endTime))
-                            .map(meal -> convertToUserMealWithExcess(meal, generalExcess))
-                            .collect(Collectors.toList()).stream();
-                    generalExcess.compareAndSet(false, caloriesPerDayLocal.get() < 0);
-                    return stream;
-                })
-                .collect(Collectors.toList());
-    }
-
-    private static UserMealWithExcess convertToUserMealWithExcess(UserMeal userMeal, AtomicBoolean excess) {
-        return new UserMealWithExcess(userMeal.getDateTime(), userMeal.getDescription(), userMeal.getCalories(), excess);
     }
 
     private static UserMealWithExcess convertToUserMealWithExcess(UserMeal userMeal, boolean excess) {
