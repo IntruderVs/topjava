@@ -1,6 +1,8 @@
 package ru.javawebinar.topjava.web;
 
 import org.slf4j.Logger;
+import ru.javawebinar.topjava.dao.InMemoryMealDao;
+import ru.javawebinar.topjava.dao.MealDao;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.util.MealsUtil;
 
@@ -11,30 +13,82 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.Month;
-import java.util.Arrays;
-import java.util.List;
+import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class MealServlet extends HttpServlet {
-    private static final Logger log = getLogger(UserServlet.class);
-    private final int caloriesPerDay = 2000;
-    List<Meal> meals = Arrays.asList(
-            new Meal(LocalDateTime.of(2020, Month.JANUARY, 30, 10, 0), "Завтрак", 500),
-            new Meal(LocalDateTime.of(2020, Month.JANUARY, 30, 13, 0), "Обед", 1000),
-            new Meal(LocalDateTime.of(2020, Month.JANUARY, 30, 20, 0), "Ужин", 500),
-            new Meal(LocalDateTime.of(2020, Month.JANUARY, 31, 0, 0), "Еда на граничное значение", 100),
-            new Meal(LocalDateTime.of(2020, Month.JANUARY, 31, 0, 1), "Полуночный перекус", 100),
-            new Meal(LocalDateTime.of(2020, Month.JANUARY, 31, 10, 0), "Завтрак", 1000),
-            new Meal(LocalDateTime.of(2020, Month.JANUARY, 31, 13, 0), "Обед", 500),
-            new Meal(LocalDateTime.of(2020, Month.JANUARY, 31, 20, 0), "Ужин", 410)
-    );
+    static final int CALORIES_PER_DAY = 2000;
+    static final String INSERT_OR_EDIT = "/editMeal.jsp";
+    static final String LIST_MEALS = "/meals.jsp";
+    private static final Logger log = getLogger(MealServlet.class);
+    private MealDao mealDao;
+
+    @Override
+    public void init() {
+        mealDao = new InMemoryMealDao();
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        log.debug("request dispatcher to meals");
-        request.setAttribute("list", MealsUtil.filteredByStreams(meals, LocalTime.MIN, LocalTime.MAX, caloriesPerDay));
-        request.getRequestDispatcher("/meals.jsp").forward(request, response);
+        String path = LIST_MEALS;
+        String action = request.getParameter("action");
+        log.info("call {}", action = action == null ? "all meals" : action);
+        switch (action) {
+            case ("delete"):
+                Long mealIdFromRequest = getMealIdFromRequest(request);
+                log.debug("call 'delete' by Id: {}", mealIdFromRequest);
+                mealDao.delete(mealIdFromRequest);
+                response.sendRedirect("meals");
+                return;
+            case ("edit"):
+                mealIdFromRequest = getMealIdFromRequest(request);
+                log.debug("call 'edit' by id: {}", mealIdFromRequest);
+                Meal meal = mealDao.getById(mealIdFromRequest);
+                request.setAttribute("mealForEdit", meal);
+                path = INSERT_OR_EDIT;
+                break;
+            case ("add"):
+                request.setAttribute("mealForEdit", new Meal(null, LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES), null, 0));
+                path = INSERT_OR_EDIT;
+                break;
+            default:
+                request.setAttribute("listMealTo", MealsUtil.filteredByStreams(mealDao.getAll(), LocalTime.MIN, LocalTime.MAX, CALORIES_PER_DAY));
+                break;
+        }
+        request.getRequestDispatcher(path).forward(request, response);
+    }
+
+    private Long getMealIdFromRequest(HttpServletRequest request) {
+        String mealId = Objects.requireNonNull(request.getParameter("mealId"));
+        return Long.parseLong(mealId);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        log.debug("call do post");
+        request.setCharacterEncoding("UTF-8");
+        LocalDateTime dateTime = LocalDateTime.parse(request.getParameter("dateTime"));
+        Long mealId = getMealIdOrNullFromRequest(request);
+        String description = request.getParameter("description");
+        int calories = Integer.parseInt(request.getParameter("calories"));
+
+        Meal meal = new Meal(mealId, dateTime, description, calories);
+        log.debug("post {} meal: {}", mealId == null ? "add" : "update", meal);
+        if (mealId == null) {
+            mealDao.add(meal);
+        } else {
+            mealDao.update(meal);
+        }
+        response.sendRedirect("meals");
+    }
+
+    private Long getMealIdOrNullFromRequest(HttpServletRequest request) {
+        String mealId = request.getParameter("mealId");
+        if (mealId == null) {
+            return null;
+        }
+        return Long.parseLong(mealId);
     }
 }

@@ -13,28 +13,43 @@
             padding: 7px;
             border: 1px solid #000;
         }
+
+        tr.excess {
+            color: firebrick;
+        }
+
+        tr {
+            color: darkgreen
+        }
     </style>
 </head>
 <body>
+<br>
 <h3><a href="index.html">Home</a></h3>
 <hr>
 <h2>Meals</h2>
+<a href="meals?action=add">Add meal</a>
+<br>
 <table>
     <thead>
     <tr>
         <th>Date</th>
         <th>Description</th>
         <th>Calories</th>
+        <th></th>
+        <th></th>
     </tr>
     </thead>
     <tbody>
-    <%--@elvariable id="list" type="java.util.List"--%>
-    <c:forEach var="list1" items="${list}">
-        <tr style="color: ${list1.excess? 'firebrick': 'darkgreen'}">
-            <fmt:parseDate value="${list1.dateTime}" pattern="yyyy-MM-d'T'HH:mm" var="parsedDateTime" type="both"/>
+    <%--@elvariable id="listMealTo" type="java.util.List"--%>
+    <c:forEach var="mealTo" items="${listMealTo}">
+        <tr ${mealTo.excess? "class='excess'": ""}>
+            <fmt:parseDate value="${mealTo.dateTime}" pattern="yyyy-MM-d'T'HH:mm" var="parsedDateTime" type="both"/>
             <td><fmt:formatDate pattern="yyyy-MM-dd HH:mm" value="${parsedDateTime}"/></td>
-            <td>${list1.description}</td>
-            <td>${list1.calories}</td>
+            <td>${mealTo.description}</td>
+            <td>${mealTo.calories}</td>
+            <td><a href="meals?action=edit&mealId=${mealTo.id}">Update</a></td>
+            <td><a href="meals?action=delete&mealId=${mealTo.id}">Delete</a></td>
         </tr>
     </c:forEach>
     </tbody>
