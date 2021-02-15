@@ -20,33 +20,29 @@
     <h3><a href="index.html">Home</a></h3>
     <hr/>
     <h2>Meals</h2>
-    <form method="get" action="meals" >
+    <form method="get" action="meals">
         <input type="hidden" name="action" value="filter">
         <dl>
-            <dt>From date:</dt>
-            <dd><label>
-                <input type="date" value="${param.startDate}" name="startDate">
-            </label></dd>
+            <dd>
+                <label>From date(including):
+                    <input type="date" value="${param.startDate}" name="startDate">
+                </label>
+                <label>to date(including):
+                    <input type="date" value="${param.endDate}" name="endDate">
+                </label>
+            </dd>
         </dl>
         <dl>
-            <dt>to date:</dt>
-            <dd><label>
-                <input type="date" value="${param.endDate}" name="endDate">
-            </label></dd>
+            <dd>
+                <label>From time(including):
+                    <input type="time" value="${param.startTime}" name="startTime">
+                </label>
+                <label>to time(excluding):
+                    <input type="time" value="${param.endTime}" name="endTime">
+                </label>
+            </dd>
         </dl>
-        <dl>
-            <dt>From time:</dt>
-            <dd><label>
-                <input type="time" value="${param.startTime}" name="startTime">
-            </label></dd>
-        </dl>
-        <dl>
-            <dt>to date:</dt>
-            <dd><label>
-                <input type="time" value="${param.endTime}" name="endTime">
-            </label></dd>
-        </dl>
-        <button type="submit">Save</button>
+        <button type="submit">Filter</button>
     </form>
     <a href="meals?action=create">Add Meal</a>
     <br><br>

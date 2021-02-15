@@ -7,7 +7,7 @@ import ru.javawebinar.topjava.util.DateTimeUtil;
 import ru.javawebinar.topjava.util.MealsUtil;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +38,7 @@ public class InMemoryMealRepository implements MealRepository {
                 .computeIfPresent(meal.getId(), (i, m) -> meal);
     }
 
-    public Map<Integer, Meal> getOrCreateUserMeals(int userId) {
+    private Map<Integer, Meal> getOrCreateUserMeals(int userId) {
         return repository.computeIfAbsent(userId, integer -> new ConcurrentHashMap<>());
     }
 
@@ -64,9 +64,9 @@ public class InMemoryMealRepository implements MealRepository {
         return filterByPredicate(userId, meal -> DateTimeUtil.isBetweenClosed(meal.getDate(), startDate, endDate));
     }
 
-    public List<Meal> filterByPredicate(int userId, Predicate<Meal> filter) {
-        Map<Integer, Meal> integerMealMap = repository.get(userId);
-        return integerMealMap == null ? new ArrayList<>() : integerMealMap
+    private List<Meal> filterByPredicate(int userId, Predicate<Meal> filter) {
+        Map<Integer, Meal> mealsMap = repository.get(userId);
+        return mealsMap == null ? Collections.emptyList() : mealsMap
                 .values().stream()
                 .filter(filter)
                 .sorted(Comparator.comparing(Meal::getDateTime).reversed())

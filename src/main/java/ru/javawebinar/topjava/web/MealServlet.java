@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.util.StringUtils;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.web.meal.MealRestController;
 
@@ -91,12 +92,12 @@ public class MealServlet extends HttpServlet {
 
     private LocalDate getDateOrNull(HttpServletRequest request, String paramName) {
         String param = request.getParameter(paramName);
-        return param == null || param.isEmpty() ? null : LocalDate.parse(param);
+        return StringUtils.hasText(param) ? LocalDate.parse(param) : null;
     }
 
     private LocalTime getTimeOrNull(HttpServletRequest request, String paramName) {
         String param = request.getParameter(paramName);
-        return param == null || param.isEmpty() ? null : LocalTime.parse(param);
+        return StringUtils.hasText(param) ? LocalTime.parse(param) : null;
     }
 
     private int getId(HttpServletRequest request) {
