@@ -2,10 +2,8 @@ DROP TABLE IF EXISTS meals;
 DROP TABLE IF EXISTS user_roles;
 DROP TABLE IF EXISTS users;
 DROP SEQUENCE IF EXISTS global_seq;
-DROP SEQUENCE IF EXISTS global_meal_seq;
 
 CREATE SEQUENCE global_seq START WITH 100000;
-CREATE SEQUENCE global_meal_seq START WITH 100000;
 
 CREATE TABLE users
 (
@@ -30,7 +28,7 @@ CREATE TABLE user_roles
 -- Meals
 CREATE TABLE meals
 (
-    id          INTEGER PRIMARY KEY DEFAULT nextval('global_meal_seq'),
+    id          INTEGER PRIMARY KEY DEFAULT nextval('global_seq'),
     user_id     INTEGER   NOT NULL,
     description TEXT      NOT NULL,
     calories    INTEGER   NOT NULL,
