@@ -3,7 +3,7 @@ package ru.javawebinar.topjava.service;
 import org.junit.AfterClass;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
+import org.junit.rules.Stopwatch;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -35,7 +35,7 @@ public class MealServiceTest {
     private MealService service;
 
     @Rule
-    public TestRule measurementOfTime = new MeasurementOfTime();
+    public Stopwatch measurementOfTime = new MeasurementOfTime();
 
     @AfterClass
     public static void afterClass() {

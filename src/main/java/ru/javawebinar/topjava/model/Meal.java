@@ -1,10 +1,7 @@
 package ru.javawebinar.topjava.model;
 
 import javax.persistence.*;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -13,20 +10,15 @@ import java.time.LocalTime;
         @NamedQuery(name = Meal.ALL, query = "SELECT m FROM Meal m WHERE m.user.id=:user_id ORDER BY m.dateTime DESC"),
         @NamedQuery(name = Meal.BY_FILTER, query = "SELECT m FROM Meal m WHERE m.user.id=:user_id" +
                 " and (m.dateTime>=:startDateTime) and (m.dateTime<:endDateTime) ORDER BY m.dateTime DESC"),
-        @NamedQuery(name = Meal.GET, query = "SELECT m FROM Meal m WHERE m.user.id=:user_id and m.id=:meal_id"),
         @NamedQuery(name = Meal.DELETE, query = "DELETE FROM Meal m WHERE m.user.id=:user_id and m.id=:meal_id"),
-        @NamedQuery(name = Meal.UPDATE, query = "UPDATE Meal set dateTime=:date_time," +
-                " description=:description, calories=:calories WHERE user.id=:user_id and id=:id"),
 })
 @Entity
 @Table(name = "meals", uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "date_time"}, name = "meals_unique_user_datetime_idx")})
 public class Meal extends AbstractBaseEntity {
 
     public static final String ALL = "Meal.getAll";
-    public static final String GET = "Meal.get";
     public static final String DELETE = "Meal.delete";
     public static final String BY_FILTER = "Meal.by_filter";
-    public static final String UPDATE = "Meal.update";
 
     @NotNull
     @Column(name = "date_time", nullable = false)

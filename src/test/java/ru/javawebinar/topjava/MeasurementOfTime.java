@@ -1,43 +1,39 @@
 package ru.javawebinar.topjava;
 
-import org.junit.rules.ExternalResource;
+import org.junit.rules.Stopwatch;
 import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
-public class MeasurementOfTime extends ExternalResource {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MeasurementOfTime.class);
-    private long startTime;
-    private String methodName;
-    private static final List<String> timeOfMethods = new ArrayList<>();
+public class MeasurementOfTime extends Stopwatch {
+    private static final Logger logger = LoggerFactory.getLogger(MeasurementOfTime.class);
+    private static final List<Entry> timeOfMethods = new ArrayList<>();
+
+    static class Entry {
+        private final String name;
+        private final long ms;
+
+        public Entry(String name, long ms) {
+            this.name = name;
+            this.ms = ms;
+        }
+    }
+
+    @Override
+    protected void finished(long nanos, Description description) {
+        Entry entry = new Entry(description.getMethodName(), TimeUnit.NANOSECONDS.toMillis(nanos));
+        timeOfMethods.add(entry);
+        logger.debug("Executing, ms: {}", entry.ms);
+    }
 
     public static void listOfTimeToTheLogs() {
-        for (String s : timeOfMethods) {
-            LOGGER.debug(s);
-        }
-        timeOfMethods.clear();
-    }
-
-    @Override
-    public Statement apply(Statement base, Description description) {
-        methodName = description.getMethodName();
-        return super.apply(base, description);
-    }
-
-    @Override
-    protected void before() throws Throwable {
-        startTime = System.nanoTime();
-    }
-
-    @Override
-    protected void after() {
-        long endTime = System.nanoTime();
-        long mc = (endTime - startTime) / 1000000;
-        timeOfMethods.add("Executing method - " + methodName + ", mc: " + mc);
-        LOGGER.debug("Executing, mc: {}", mc);
+        logger.debug(timeOfMethods.stream()
+                .map(timeOfMethod -> String.format("\n%s%" + (30 - timeOfMethod.name.length()) + "s - %d ms", timeOfMethod.name, " ", timeOfMethod.ms))
+                .collect(Collectors.joining()));
     }
 }
