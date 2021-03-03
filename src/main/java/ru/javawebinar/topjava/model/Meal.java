@@ -19,7 +19,7 @@ import java.time.LocalTime;
                 " description=:description, calories=:calories WHERE user.id=:user_id and id=:id"),
 })
 @Entity
-@Table(name = "meals", uniqueConstraints = {@UniqueConstraint(columnNames = "date_time", name = "meals_unique_user_datetime_idx")})
+@Table(name = "meals", uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "date_time"}, name = "meals_unique_user_datetime_idx")})
 public class Meal extends AbstractBaseEntity {
 
     public static final String ALL = "Meal.getAll";
@@ -37,11 +37,12 @@ public class Meal extends AbstractBaseEntity {
     @Size(min = 4, max = 100)
     private String description;
 
-    @Min(value = 1, message = "Calories must be greater than 0")
+    @Min(value = 10, message = "Calories must be greater than 9")
+    @Max(value = 5_000, message = "Calories must be less than 5000")
     @Column(name = "calories", nullable = false)
     private int calories;
 
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     private User user;
