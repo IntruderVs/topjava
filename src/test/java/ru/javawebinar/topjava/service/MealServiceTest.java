@@ -141,6 +141,14 @@ public class MealServiceTest {
     }
 
     @Test
+    public void getBetweenInclusiveWithBorderLineValue() {
+        MEAL_MATCHER.assertMatch(service.getBetweenInclusive(
+                LocalDate.of(2020, Month.JANUARY, 31),
+                LocalDate.of(2020, Month.JANUARY, 31), USER_ID),
+                meal7, meal6, meal5, meal4);
+    }
+
+    @Test
     public void getBetweenWithNullDates() {
         MEAL_MATCHER.assertMatch(service.getBetweenInclusive(null, null, USER_ID), meals);
     }
