@@ -1,7 +1,6 @@
 package ru.javawebinar.topjava.web;
 
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.context.support.GenericXmlApplicationContext;
 import org.springframework.util.StringUtils;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.web.meal.MealRestController;
@@ -19,15 +18,23 @@ import java.util.Objects;
 
 import static ru.javawebinar.topjava.util.DateTimeUtil.parseLocalDate;
 import static ru.javawebinar.topjava.util.DateTimeUtil.parseLocalTime;
+import static ru.javawebinar.topjava.web.Profiles.ACTIVE_DB;
+import static ru.javawebinar.topjava.web.Profiles.REPOSITORY_IMPLEMENTATION;
 
 public class MealServlet extends HttpServlet {
 
-    private ConfigurableApplicationContext springContext;
+    private GenericXmlApplicationContext springContext;
     private MealRestController mealController;
 
     @Override
     public void init() {
-        springContext = new ClassPathXmlApplicationContext("spring/spring-app.xml", "spring/spring-db.xml");
+        //The Guys At Spring now recommend you use the GenericApplicationContext class instead of ClassPathXmlApplicationContext
+        springContext = new GenericXmlApplicationContext();
+        //TODO How to determine the profile?
+        springContext.getEnvironment().setActiveProfiles(ACTIVE_DB, REPOSITORY_IMPLEMENTATION);
+        springContext.load("spring/spring-app.xml", "spring/spring-db.xml");
+        springContext.refresh();
+
         mealController = springContext.getBean(MealRestController.class);
     }
 
