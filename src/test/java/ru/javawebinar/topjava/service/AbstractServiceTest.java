@@ -1,10 +1,13 @@
 package ru.javawebinar.topjava.service;
 
+import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.Stopwatch;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
@@ -28,6 +31,9 @@ abstract public class AbstractServiceTest {
     @ClassRule
     public static ExternalResource summary = TimingRules.SUMMARY;
 
+    @Autowired
+    private Environment environment;
+
     @Rule
     public Stopwatch stopwatch = TimingRules.STOPWATCH;
 
@@ -40,5 +46,13 @@ abstract public class AbstractServiceTest {
                 throw getRootCause(e);
             }
         });
+    }
+
+    protected void NotJdbcProfile() {
+        for (String activeProfile : environment.getActiveProfiles()) {
+            if (activeProfile.equalsIgnoreCase("jdbc")) {
+                Assume.assumeTrue("do not use for jdbc", false);
+            }
+        }
     }
 }
