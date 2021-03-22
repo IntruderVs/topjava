@@ -32,6 +32,8 @@ public class JdbcUserRepository implements UserRepository {
 
     private final SimpleJdbcInsert insertUser;
 
+    private final Validator validator;
+
     @Autowired
     public JdbcUserRepository(JdbcTemplate jdbcTemplate, NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
         this.insertUser = new SimpleJdbcInsert(jdbcTemplate)
@@ -40,17 +42,13 @@ public class JdbcUserRepository implements UserRepository {
 
         this.jdbcTemplate = jdbcTemplate;
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+        this.validator = Validation.buildDefaultValidatorFactory().getValidator();
     }
 
     @Override
     @Transactional
     public User save(User user) {
-        ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
-        Validator validator = validatorFactory.getValidator();
-        Set<ConstraintViolation<User>> validate = validator.validate(user);
-        if (validate.size() > 0) {
-            throw new ConstraintViolationException(validate);
-        }
+        JdbcValidator.validate(this.validator, user);
         BeanPropertySqlParameterSource parameterSource = new BeanPropertySqlParameterSource(user);
 
         if (user.isNew()) {
