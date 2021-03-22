@@ -66,6 +66,15 @@
         <bean id="namedJdbcTemplate" class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate">
             <constructor-arg ref="jdbcTemplate"/>
         </bean>
+
+        <!-- Initialization for TransactionManager -->
+        <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+            <property name="dataSource"  ref="dataSource" />
+        </bean>
+
+        <!-- Validation We create beans and they injection to repository for jdbc implementation-->
+        <bean id="validatorFactory" class="javax.validation.Validation" factory-method="buildDefaultValidatorFactory"/>
+        <bean id="validator" factory-bean="validatorFactory" factory-method="getValidator"/>
     </beans>
 
     <beans profile="jpa,datajpa">
